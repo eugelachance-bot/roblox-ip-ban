@@ -23,21 +23,42 @@ function getIP(req){
     return ip.trim();
 }
 
+function countUnique(key){
+    return new Set(bans.map(b => b[key])).size;
+}
+
 app.get("/",(req,res)=>{
     res.send(`
     <h2>Ban Panel</h2>
+    <p>IP bans: ${countUnique("ip")}</p>
+    <p>HWID bans: ${countUnique("hwid")}</p>
+    <p>Fingerprint bans: ${countUnique("fingerprint")}</p>
+
     <button onclick="window.location='/bans'">Ver Banidos</button>
     <button onclick="window.location='/clear'">Clear All</button>
     `);
 });
 
 app.get("/bans",(req,res)=>{
-    let html = "<h2>Lista de Banidos</h2><a href='/'>Voltar</a><br><br>";
+    const search = req.query.search?.toLowerCase() || "";
 
-    bans.forEach((b,i)=>{
+    let html = `
+    <h2>Lista de Banidos</h2>
+    <a href="/">Voltar</a><br><br>
+
+    <form method="GET" action="/bans">
+        <input name="search" placeholder="Filtrar por nickname">
+        <button type="submit">Buscar</button>
+    </form>
+    <br>
+    `;
+
+    bans
+    .filter(b => b.username?.toLowerCase().includes(search))
+    .forEach((b,i)=>{
         html += `
         <div style="border:1px solid #ccc;padding:10px;margin:5px">
-            <img src="https://www.roblox.com/headshot-thumbnail/image?userId=${b.userId}&width=60&height=60&format=png">
+            <img src="https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${b.userId}&size=60x60&format=Png&isCircular=false">
             <br>
             <b>${b.username}</b><br>
             UserId: ${b.userId}<br>
