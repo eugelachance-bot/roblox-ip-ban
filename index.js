@@ -6,11 +6,7 @@ app.use(express.json());
 
 const FILE = "bans.json";
 
-let bans = {
-    ip: [],
-    hwid: [],
-    fingerprint: []
-};
+let bans = [];
 
 if (fs.existsSync(FILE)) {
     bans = JSON.parse(fs.readFileSync(FILE));
@@ -30,31 +26,68 @@ function getIP(req){
 app.get("/",(req,res)=>{
     res.send(`
     <h2>Ban Panel</h2>
-    <p>IP bans: ${bans.ip.length}</p>
-    <p>HWID bans: ${bans.hwid.length}</p>
-    <p>Fingerprint bans: ${bans.fingerprint.length}</p>
+    <button onclick="window.location='/bans'">Ver Banidos</button>
+    <button onclick="window.location='/clear'">Clear All</button>
     `);
+});
+
+app.get("/bans",(req,res)=>{
+    let html = "<h2>Lista de Banidos</h2><a href='/'>Voltar</a><br><br>";
+
+    bans.forEach((b,i)=>{
+        html += `
+        <div style="border:1px solid #ccc;padding:10px;margin:5px">
+            <img src="https://www.roblox.com/headshot-thumbnail/image?userId=${b.userId}&width=60&height=60&format=png">
+            <br>
+            <b>${b.username}</b><br>
+            UserId: ${b.userId}<br>
+            IP: ${b.ip}<br>
+            <a href="/unban/${i}">Unban</a>
+        </div>
+        `;
+    });
+
+    res.send(html);
+});
+
+app.get("/unban/:id",(req,res)=>{
+    const id = parseInt(req.params.id);
+    bans.splice(id,1);
+    save();
+    res.redirect("/bans");
+});
+
+app.get("/clear",(req,res)=>{
+    bans = [];
+    save();
+    res.redirect("/");
 });
 
 app.post("/check",(req,res)=>{
     const ip = getIP(req);
     const { hwid, fingerprint } = req.body;
 
-    const banned =
-        bans.ip.includes(ip) ||
-        bans.hwid.includes(hwid) ||
-        bans.fingerprint.includes(fingerprint);
+    const banned = bans.some(b =>
+        b.ip === ip ||
+        b.hwid === hwid ||
+        b.fingerprint === fingerprint
+    );
 
     res.json({ banned });
 });
 
 app.post("/ban",(req,res)=>{
     const ip = getIP(req);
-    const { hwid, fingerprint } = req.body;
+    const { hwid, fingerprint, userId, username } = req.body;
 
-    if(!bans.ip.includes(ip)) bans.ip.push(ip);
-    if(hwid && !bans.hwid.includes(hwid)) bans.hwid.push(hwid);
-    if(fingerprint && !bans.fingerprint.includes(fingerprint)) bans.fingerprint.push(fingerprint);
+    bans.push({
+        ip,
+        hwid,
+        fingerprint,
+        userId,
+        username,
+        time: Date.now()
+    });
 
     save();
     res.json({ success: true });
