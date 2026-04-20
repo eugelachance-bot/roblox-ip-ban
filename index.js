@@ -27,6 +27,15 @@ function getIP(req){
     return ip.trim();
 }
 
+app.get("/",(req,res)=>{
+    res.send(`
+    <h2>Ban Panel</h2>
+    <p>IP bans: ${bans.ip.length}</p>
+    <p>HWID bans: ${bans.hwid.length}</p>
+    <p>Fingerprint bans: ${bans.fingerprint.length}</p>
+    `);
+});
+
 app.post("/check",(req,res)=>{
     const ip = getIP(req);
     const { hwid, fingerprint } = req.body;
