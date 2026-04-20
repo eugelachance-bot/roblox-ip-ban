@@ -58,13 +58,21 @@ app.get("/bans",(req,res)=>{
     .forEach((b,i)=>{
         html += `
         <div style="border:1px solid #ccc;padding:10px;margin:5px">
-            <img src="https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${b.userId}&size=60x60&format=Png&isCircular=false">
+            <img id="avatar-${i}" width="60" height="60">
             <br>
             <b>${b.username}</b><br>
             UserId: ${b.userId}<br>
             IP: ${b.ip}<br>
             <a href="/unban/${i}">Unban</a>
         </div>
+
+        <script>
+        fetch("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${b.userId}&size=60x60&format=Png&isCircular=false")
+        .then(r=>r.json())
+        .then(data=>{
+            document.getElementById("avatar-${i}").src = data.data[0].imageUrl
+        })
+        </script>
         `;
     });
 
